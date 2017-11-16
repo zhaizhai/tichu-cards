@@ -147,14 +147,14 @@ class CardMaker(object):
 
         card = Card(guides=guides)
         suit_img = self.suits._get(suit)
-        suit_img = suit_img.resize((168, 168), Image.ANTIALIAS)
 
         if num == 1:
             big_img = suit_img.resize((336, 336), Image.ANTIALIAS)
             card.paste(big_img, int(W/2), int(H/2))
         else:
-            positions = self.gridmaker.get_positions(num, tilt=0.15)
-            card.pasten(suit_img, positions)
+            small_img = suit_img.resize((144, 144), Image.ANTIALIAS)
+            positions = self.gridmaker.get_positions(num)
+            card.pasten(small_img, positions)
         self._draw_corners(card, num, suit_img, allfour=True)
         return card
 

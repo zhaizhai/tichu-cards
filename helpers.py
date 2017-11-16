@@ -27,14 +27,14 @@ class FontImages(object):
 
         self._make_numbers()
         # "龙龍凤鳳犬䲵雀"
-        self._draw_chinese(u"鳳", 0)
-        self._draw_chinese(u"龍", 1)
-        self._draw_chinese(u"犬", 2)
-        self._draw_chinese(u"䲵", 3)
-        # self._draw_chinese(u"凤", 0)
-        # self._draw_chinese(u"龙", 1)
+        # self._draw_chinese(u"鳳", 0)
+        # self._draw_chinese(u"龍", 1)
         # self._draw_chinese(u"犬", 2)
-        # self._draw_chinese(u"雀", 3)
+        # self._draw_chinese(u"䲵", 3)
+        self._draw_chinese(u"凤", 0)
+        self._draw_chinese(u"龙", 1)
+        self._draw_chinese(u"犬", 2)
+        self._draw_chinese(u"雀", 3)
 
 
     def _visualize(self):
