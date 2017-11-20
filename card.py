@@ -179,23 +179,37 @@ class CardMaker(object):
         draw.rectangle((padw, padh, padw + thickness, int(H) - padh), "black")
         draw.rectangle((int(W) - padw + thickness, padh, int(W) - padw, int(H) - padh), "black")
 
-        suit_names = ["star", "pagoda", "sword", "gem"]
+        FACECARD_DATA = [
+            [
+                ["starJ.png", (900, 900), (540, 540), (-28, -28)],
+                ["starQ.png", (900, 1260), (525, 735), (0, 0)],
+                ["starK.png", (1080, 1380), (540, 690), (36, 25)],
+            ],
+            [
+                ["gemJ.png", (480, 960), (330, 660), (0, 0)],
+                ["gemQ.png", (720, 1200), (390, 650), (0, 0)],
+                ["gemK.png", (960, 1200), (600, 750), (0, 0)],
+            ],
+            [
+                ["swordJ.png", (600, 900), (400, 600), (0, 0)],
+                ["swordQ.png", (997, 1400), (500, 700), (8, -28)],
+                ["swordK.png", (1000, 1320), (500, 660), (-28, -28)],
+            ],
+            [
+                ["gemJ.png", (480, 960), (330, 660), (0, 0)],
+                ["gemQ.png", (720, 1200), (390, 650), (0, 0)],
+                ["gemK.png", (960, 1200), (600, 750), (0, 0)],
+            ],
+        ]
+
+        data = FACECARD_DATA[suit]
+        assert 11 <= num <= 13
+        filename, orig_dims, resize_dims, offsets = data[num - 11]
+        img = Image.open(filename)
+        img = img.resize(resize_dims, Image.ANTIALIAS)
+        card.paste(img, int(W/2) + offsets[0], int(H/2) + offsets[1])
+
         suit_img = self.suits._get(suit)
-        if num == 11: # TODO: different suits
-            #img = Image.open("jack.png") # 384x512
-            img = Image.open("swordJ.png") # 600x900
-            img = img.resize((400, 600), Image.ANTIALIAS)
-            card.paste(img, int(W/2), int(H/2))
-        elif num == 12: # TODO: different suits
-            img = Image.open("swordQ.png") # 997x1400 # oops, width should be 1000
-            img = img.resize((500, 700), Image.ANTIALIAS)
-            card.paste(img, int(W/2) + 8, int(H/2) - 28)
-        elif num == 13: # TODO: different suits
-            img = Image.open("swordK.png") # 1000x1320
-            img = img.resize((500, 660), Image.ANTIALIAS)
-            card.paste(img, int(W/2) - 28, int(H/2) - 28)
-        else:
-            assert False
         self._draw_corners(card, num, suit_img, allfour=True)
         return card
 
@@ -240,5 +254,5 @@ for idx, special in enumerate("PDOM"):
 fulldeck.save("test.png")
 
 #CardMaker().make_card(1, 0, guides="CS").img.save("test.png")
-#CardMaker().make_facecard(11, 2, guides="CS").img.save("test.png")
+#CardMaker().make_facecard(11, 0, guides="CS").img.save("test.png")
 #CardMaker().make_special("M", guides="C").img.save("test.png")
