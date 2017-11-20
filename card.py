@@ -154,7 +154,16 @@ class CardMaker(object):
         else:
             small_img = suit_img.resize((144, 144), Image.ANTIALIAS)
             positions = self.gridmaker.get_positions(num)
-            card.pasten(small_img, positions)
+
+            upper, lower = [], []
+            for x, y in positions:
+                if y < H/2 - 0.01 * (x - W/2) + 1:
+                    upper.append((x,y))
+                else:
+                    lower.append((x,y))
+            card.pasten(small_img, upper)
+            card.pasten(small_img.transpose(Image.ROTATE_180), lower)
+
         self._draw_corners(card, num, suit_img, allfour=True)
         return card
 
@@ -170,15 +179,21 @@ class CardMaker(object):
         draw.rectangle((padw, padh, padw + thickness, int(H) - padh), "black")
         draw.rectangle((int(W) - padw + thickness, padh, int(W) - padw, int(H) - padh), "black")
 
+        suit_names = ["star", "pagoda", "sword", "gem"]
         suit_img = self.suits._get(suit)
-        if num == 11:
-            img = Image.open("jack.png") # 384x512
-            img = img.resize((420, 560), Image.ANTIALIAS)
+        if num == 11: # TODO: different suits
+            #img = Image.open("jack.png") # 384x512
+            img = Image.open("swordJ.png") # 600x900
+            img = img.resize((400, 600), Image.ANTIALIAS)
             card.paste(img, int(W/2), int(H/2))
-        elif num == 12:
-            pass # TODO
-        elif num == 13:
-            pass # TODO
+        elif num == 12: # TODO: different suits
+            img = Image.open("swordQ.png") # 997x1400 # oops, width should be 1000
+            img = img.resize((500, 700), Image.ANTIALIAS)
+            card.paste(img, int(W/2) + 8, int(H/2) - 28)
+        elif num == 13: # TODO: different suits
+            img = Image.open("swordK.png") # 1000x1320
+            img = img.resize((500, 660), Image.ANTIALIAS)
+            card.paste(img, int(W/2) - 28, int(H/2) - 28)
         else:
             assert False
         self._draw_corners(card, num, suit_img, allfour=True)
@@ -225,5 +240,5 @@ for idx, special in enumerate("PDOM"):
 fulldeck.save("test.png")
 
 #CardMaker().make_card(1, 0, guides="CS").img.save("test.png")
-#CardMaker().make_facecard(11, 3, guides="CS").img.save("test.png")
+#CardMaker().make_facecard(11, 2, guides="CS").img.save("test.png")
 #CardMaker().make_special("M", guides="C").img.save("test.png")

@@ -52,25 +52,38 @@ class FontImages(object):
 
     def _make_numbers(self):
         draw = ImageDraw.Draw(self.numbers_img)
-        self._draw_single_char("A", 1)
+        self._draw_letter("A", 1, height_ratio=1.05, adjust=(0, 3))
         for n in range(2, 10):
-            self._draw_single_char(str(n), n)
+            self._draw_single_digit(str(n), n)
 
         # make 10 thinner
         thin_ten = self._make_ten().resize((self.w, self.h), Image.ANTIALIAS)
         self.numbers_img.paste(thin_ten, (10*self.w + 14, 0), thin_ten)
 
-        self._draw_single_char("J", 11)
-        self._draw_single_char("Q", 12)
-        self._draw_single_char("K", 13)
+        self._draw_letter("J", 11, height_ratio=1.05, adjust=(0, 3))
+        self._draw_letter("Q", 12, height_ratio=1.16, adjust=(0, 3))
+        self._draw_letter("K", 13, height_ratio=1.05, adjust=(0, 3))
 
-    def _draw_single_char(self, t, position):
+    def _draw_single_digit(self, t, position):
         draw = ImageDraw.Draw(self.numbers_img)
         tw, th = draw.textsize(t, font=self.font)
         x = position * self.w
         draw.text((int(x + self.w/2.0 - tw/2.0),
                    int(self.h/2.0 - th/2.0 - 24)),
                   t, font=self.font, fill="black")
+
+    def _draw_letter(self, t, position, height_ratio=1.0, adjust=(0, 0)):
+        lw, lh = self.w, int(height_ratio * self.h)
+        letter_img = Image.new("RGBA", (lw, lh))
+        draw = ImageDraw.Draw(letter_img)
+        tw, th = draw.textsize(t, font=self.font)
+        draw.text((int(lw/2.0 - tw/2.0),
+                   int(lh/2.0 - th/2.0 - 24)),
+                  t, font=self.font, fill="black")
+
+        letter_img = letter_img.resize((self.w, self.h))
+        self.numbers_img.paste(
+            letter_img, (position * self.w + adjust[0], adjust[1]), letter_img)
 
     def _make_ten(self):
         ten_img = Image.new("RGBA", (int(1.2 * self.w), self.h))
