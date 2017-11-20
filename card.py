@@ -186,9 +186,9 @@ class CardMaker(object):
                 ["starK.png", (1080, 1380), (540, 690), (36, 25)],
             ],
             [
-                ["gemJ.png", (480, 960), (330, 660), (0, 0)],
-                ["gemQ.png", (720, 1200), (390, 650), (0, 0)],
-                ["gemK.png", (960, 1200), (600, 750), (0, 0)],
+                ["pagodaJ.png", (660, 900), (495, 675), (4, 0)],
+                ["pagodaQ.png", (1200, 1200), (600, 600), (0, 0)],
+                ["pagodaK.png", (1200, 1320), (600, 660), (0, 30)],
             ],
             [
                 ["swordJ.png", (600, 900), (400, 600), (0, 0)],
@@ -254,5 +254,5 @@ for idx, special in enumerate("PDOM"):
 fulldeck.save("test.png")
 
 #CardMaker().make_card(1, 0, guides="CS").img.save("test.png")
-#CardMaker().make_facecard(11, 0, guides="CS").img.save("test.png")
+#CardMaker().make_facecard(11, 1, guides="CS").img.save("test.png")
 #CardMaker().make_special("M", guides="C").img.save("test.png")
