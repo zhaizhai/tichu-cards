@@ -204,24 +204,46 @@ class CardMaker(object):
             card.paste(mini.transpose(Image.ROTATE_180), ox, int(H) - oy)
 
 
+def make_deck(guides="C", imgdir=None):
+    if imgdir is not None:
+        if not os.path.exists(imgdir):
+            os.makedirs(imgdir)
 
-fulldeck = Image.new("RGBA", (13 * int(W), 5 * int(H)))
-cm = CardMaker()
-for suit in range(4):
-    for num in range(1, 14):
-        if num <= 10:
-            card = cm.make_card(num, suit, guides="C")
+    fulldeck = Image.new("RGBA", (13 * int(W), 5 * int(H)))
+    cm = CardMaker()
+    for suit in range(4):
+        for num in range(1, 14):
+            if num <= 10:
+                card = cm.make_card(num, suit, guides=guides)
+            else:
+                card = cm.make_facecard(num, suit, guides=guides)
+
+            suit_name = ["star", "pagoda", "sword", "gem"]
+            num_name = "A" if num == 1 else str(num)
+            if imgdir is not None:
+                card.img.save(os.path.join(imgdir, suit_name[suit] + num_name + ".png"))
+            else:
+                fulldeck.paste(card.img, ((num - 1) * int(W), (suit + 1) * int(H)))
+
+    back = Card(guides=guides)
+    back.draw_back()
+    if imgdir is not None:
+        back.img.save(os.path.join(imgdir, "back.png"))
+    else:
+        fulldeck.paste(back.img, (0, 0))
+
+    special_names = ["phoenix", "dragon", "dog", "mahjong"]
+    for idx, special in enumerate("PDOM"):
+        card = cm.make_special(special, guides=guides)
+        if imgdir is not None:
+            card.img.save(os.path.join(imgdir, special_names[idx] + ".png"))
         else:
-            card = cm.make_facecard(num, suit, guides="C")
-        fulldeck.paste(card.img, ((num - 1) * int(W), (suit + 1) * int(H)))
+            fulldeck.paste(card.img, ((idx + 1) * int(W), 0))
 
-back = Card(guides="C")
-back.draw_back()
-fulldeck.paste(back.img, (0, 0))
-for idx, special in enumerate("PDOM"):
-    card = cm.make_special(special, guides="C")
-    fulldeck.paste(card.img, ((idx + 1) * int(W), 0))
-fulldeck.save("test.png")
+    fulldeck.save("test.png")
+
+make_deck()
+#make_deck(guides="", imgdir="cards")
 
 #CardMaker().make_card(1, 0, guides="CS").img.save("images/test.png")
 #CardMaker().make_facecard(11, 1, guides="CS").img.save("images/test.png")
