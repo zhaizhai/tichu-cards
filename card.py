@@ -2,7 +2,7 @@
 
 import os, sys, math
 from PIL import Image, ImageDraw, ImageFont
-from helpers import SuitImages, FontImages
+from helpers import SuitImages, FontImages, GridMaker
 
 W, H = 822.0, 1122.0 # bridge dims: 747.0, 1122.0
 CUT_W, CUT_H = 750.0, 1050.0
@@ -45,6 +45,22 @@ class Card(object):
             br = (W/2 + SAFE_W/2, H/2 + SAFE_H/2)
             draw_rounded_rect(self.img, ul+br, 40, "red", 2)
 
+    def draw_back(self):
+        ul = (W/2 - SAFE_W/2, H/2 - SAFE_H/2)
+        br = (W/2 + SAFE_W/2, H/2 + SAFE_H/2)
+        mask = Image.new("RGBA", self.img.size)
+        draw_rounded_rect(mask, ul+br, 40, "black", int(SAFE_W - 1))
+
+        pattern = Image.new("RGBA", self.img.size)
+        draw = ImageDraw.Draw(pattern)
+        draw.rectangle((0,0) + pattern.size, fill="#ddcb8d")
+        for x in range(pattern.size[0]):
+            for y in range(pattern.size[1]):
+                a, b = (x + y), (x - y)
+                if (a % 70) <= 9 or (b % 70) <= 9:
+                    draw.point((x, y), "#9e8634")
+        self.img.paste(pattern, (0, 0), mask)
+
     def _paste(self, icon, x, y):
         w, h = icon.size
         # use icon as mask for itself
@@ -59,59 +75,11 @@ class Card(object):
         for x, y in positions:
             self._paste(icon, x - w/2, y - h/2)
 
-def grid(rows, cols, x, y, w, h):
-    w, h = float(w), float(h)
-    ret = []
-    for i in range(rows):
-        for j in range(cols):
-            curx = (x + j * (w / (cols - 1)) if cols > 1 else x + w/2)
-            cury = (y + i * (h / (rows - 1)) if rows > 1 else y + h/2)
-            ret.append((int(curx), int(cury)))
-    return ret
-
-class GridMaker(object):
-    def __init__(self, margin_w, margin_h):
-        self.margin = (margin_w, margin_h)
-        self.positions = [
-            None, None,
-            self.card_grid(2, 1),
-            self.card_grid(3, 1),
-            self.card_grid(2, 2),
-            self.card_grid(2, 2) + [self.central(0.5)],
-            self.card_grid(3, 2),
-            self.card_grid(3, 2) + [self.central(0.25)],
-            self.card_grid(3, 2) + [self.central(0.25), self.central(0.75)],
-            self.card_grid(4, 2) + [self.central(0.5)],
-            self.card_grid(4, 2) + [self.central(1.0/6), self.central(5.0/6)]
-        ]
-
-    def card_grid(self, rows, cols):
-        mw, mh = self.margin
-        return grid(rows, cols, mw, mh, W - 2*mw, H - 2*mh)
-
-    def central(self, ratio):
-        mw, mh = self.margin
-        x = W/2
-        y = mh + (H - 2*mh) * ratio
-        return (int(x), int(y))
-
-    def tilt(self, positions, slope=0.15):
-        ret = []
-        for (x, y) in positions:
-            y2 = y - int((x - W/2) * slope)
-            ret.append((x, y2))
-        return ret
-
-    def get_positions(self, num, tilt=None):
-        if tilt is None:
-            return self.positions[num]
-        return self.tilt(self.positions[num], slope=tilt)
-
 
 class CardMaker(object):
     def __init__(self):
         self.suits = SuitImages()
-        self.gridmaker = GridMaker(280, 280)
+        self.gridmaker = GridMaker((int(W), int(H)), margin_w=280, margin_h=280)
         self.chinese_font = ImageFont.truetype("fonts/NotoSerifCJKsc-Bold.otf", 144,
                                                encoding="unic")
         self.font_imgs = FontImages()
@@ -120,19 +88,19 @@ class CardMaker(object):
         card = Card(guides=guides)
 
         if value is "P":
-            img = Image.open("phx.png") # 400x600
+            img = Image.open("images/phx.png") # 400x600
             img = img.resize((540, 810), Image.ANTIALIAS)
             card.paste(img, int(W/2), int(H/2))
         elif value is "D":
-            img = Image.open("dragon.png") # 480x300
+            img = Image.open("images/dragon.png") # 480x300
             img = img.resize((640, 400), Image.ANTIALIAS)
             card.paste(img, int(W/2), int(H/2))
         elif value is "O":
-            img = Image.open("dog.png") # 480x360
+            img = Image.open("images/dog.png") # 480x360
             img = img.resize((640, 480), Image.ANTIALIAS)
             card.paste(img, int(W/2), int(H/2))
         elif value is "M":
-            img = Image.open("mahjong.png") # 480x480
+            img = Image.open("images/mahjong.png") # 480x480
             img = img.resize((640, 640), Image.ANTIALIAS)
             card.paste(img, int(W/2), int(H/2))
         else:
@@ -181,24 +149,24 @@ class CardMaker(object):
 
         FACECARD_DATA = [
             [
-                ["starJ.png", (900, 900), (540, 540), (-28, -28)],
-                ["starQ.png", (900, 1260), (525, 735), (0, 0)],
-                ["starK.png", (1080, 1380), (540, 690), (36, 25)],
+                ["images/starJ.png", (900, 900), (540, 540), (-28, -28)],
+                ["images/starQ.png", (900, 1260), (525, 735), (0, 0)],
+                ["images/starK.png", (1080, 1380), (540, 690), (36, 25)],
             ],
             [
-                ["pagodaJ.png", (660, 900), (495, 675), (4, 0)],
-                ["pagodaQ.png", (1200, 1200), (600, 600), (0, 0)],
-                ["pagodaK.png", (1200, 1320), (600, 660), (0, 30)],
+                ["images/pagodaJ.png", (660, 900), (495, 675), (4, 0)],
+                ["images/pagodaQ.png", (1200, 1200), (600, 600), (0, 0)],
+                ["images/pagodaK.png", (1200, 1320), (600, 660), (0, 30)],
             ],
             [
-                ["swordJ.png", (600, 900), (400, 600), (0, 0)],
-                ["swordQ.png", (997, 1400), (500, 700), (8, -28)],
-                ["swordK.png", (1000, 1320), (500, 660), (-28, -28)],
+                ["images/swordJ.png", (600, 900), (400, 600), (0, 0)],
+                ["images/swordQ.png", (997, 1400), (500, 700), (8, -28)],
+                ["images/swordK.png", (1000, 1320), (500, 660), (-28, -28)],
             ],
             [
-                ["gemJ.png", (480, 960), (330, 660), (0, 0)],
-                ["gemQ.png", (720, 1200), (390, 650), (0, 0)],
-                ["gemK.png", (960, 1200), (600, 750), (0, 0)],
+                ["images/gemJ.png", (480, 960), (330, 660), (0, 0)],
+                ["images/gemQ.png", (720, 1200), (390, 650), (0, 0)],
+                ["images/gemK.png", (960, 1200), (600, 750), (0, 0)],
             ],
         ]
 
@@ -212,7 +180,6 @@ class CardMaker(object):
         suit_img = self.suits._get(suit)
         self._draw_corners(card, num, suit_img, allfour=True)
         return card
-
 
     def _draw_corners(self, card, num, suit_img,
                       adjust=(0,0), allfour=False):
@@ -238,7 +205,7 @@ class CardMaker(object):
 
 
 
-fulldeck = Image.new("RGBA", (14 * int(W), 4 * int(H)))
+fulldeck = Image.new("RGBA", (13 * int(W), 5 * int(H)))
 cm = CardMaker()
 for suit in range(4):
     for num in range(1, 14):
@@ -246,13 +213,16 @@ for suit in range(4):
             card = cm.make_card(num, suit, guides="C")
         else:
             card = cm.make_facecard(num, suit, guides="C")
-        fulldeck.paste(card.img, (num * int(W), suit * int(H)))
+        fulldeck.paste(card.img, ((num - 1) * int(W), (suit + 1) * int(H)))
 
+back = Card(guides="C")
+back.draw_back()
+fulldeck.paste(back.img, (0, 0))
 for idx, special in enumerate("PDOM"):
     card = cm.make_special(special, guides="C")
-    fulldeck.paste(card.img, (0, idx * int(H)))
+    fulldeck.paste(card.img, ((idx + 1) * int(W), 0))
 fulldeck.save("test.png")
 
-#CardMaker().make_card(1, 0, guides="CS").img.save("test.png")
-#CardMaker().make_facecard(11, 1, guides="CS").img.save("test.png")
-#CardMaker().make_special("M", guides="C").img.save("test.png")
+#CardMaker().make_card(1, 0, guides="CS").img.save("images/test.png")
+#CardMaker().make_facecard(11, 1, guides="CS").img.save("images/test.png")
+#CardMaker().make_special("M", guides="C").img.save("images/test.png")

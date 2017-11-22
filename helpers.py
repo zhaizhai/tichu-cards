@@ -3,9 +3,62 @@
 import os, sys, math
 from PIL import Image, ImageDraw, ImageFont
 
+
+
+class GridMaker(object):
+    def __init__(self, dims, margin_w=0, margin_h=0):
+        self.W, self.H = dims
+        self.margin = (margin_w, margin_h)
+        self.positions = [
+            None, None,
+            self.card_grid(2, 1),
+            self.card_grid(3, 1),
+            self.card_grid(2, 2),
+            self.card_grid(2, 2) + [self.central(0.5)],
+            self.card_grid(3, 2),
+            self.card_grid(3, 2) + [self.central(0.25)],
+            self.card_grid(3, 2) + [self.central(0.25), self.central(0.75)],
+            self.card_grid(4, 2) + [self.central(0.5)],
+            self.card_grid(4, 2) + [self.central(1.0/6), self.central(5.0/6)]
+        ]
+
+    def _grid(self, rows, cols, x, y, w, h):
+        w, h = float(w), float(h)
+        ret = []
+        for i in range(rows):
+            for j in range(cols):
+                curx = (x + j * (w / (cols - 1)) if cols > 1 else x + w/2)
+                cury = (y + i * (h / (rows - 1)) if rows > 1 else y + h/2)
+                ret.append((int(curx), int(cury)))
+        return ret
+
+    def card_grid(self, rows, cols):
+        mw, mh = self.margin
+        return self._grid(rows, cols, mw, mh, self.W - 2*mw, self.H - 2*mh)
+
+    def central(self, ratio):
+        mw, mh = self.margin
+        x = self.W/2
+        y = mh + (self.H - 2*mh) * ratio
+        return (int(x), int(y))
+
+    def tilt(self, positions, slope=0.15):
+        ret = []
+        for (x, y) in positions:
+            y2 = y - int((x - self.W/2) * slope)
+            ret.append((x, y2))
+        return ret
+
+    def get_positions(self, num, tilt=None):
+        if tilt is None:
+            return self.positions[num]
+        return self.tilt(self.positions[num], slope=tilt)
+
+
+
 class SuitImages(object):
     def __init__(self):
-        self.img = Image.open('suits.png')
+        self.img = Image.open("images/suits.png")
 
     def _get(self, idx):
         x = idx * 192
