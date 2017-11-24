@@ -50,18 +50,21 @@ class PuzzleText(object):
             a, b = 1, 3
             w, h = img.size
             return img.resize((w * a / b, h * a / b))
+        def adjust(img, pad=0, yshift=0):
+            w, h = img.size
+            return img.crop((-pad, min(-yshift, 0), w + pad, max(h, h - yshift)))
 
-        mahjong = rescale(self.images["M"])
-        sword = self.suits["sword"].resize((96, 96))
+        mahjong = adjust(rescale(self.images["M"]), pad=12)
+        sword = adjust(self.suits["sword"].resize((96, 96)), pad=30, yshift=-16)
 
-        star = self.suits["star"].resize((96, 96))
-        dog = rescale(self.images["O"])
+        star = adjust(self.suits["star"].resize((96, 96)), pad=30, yshift=-16)
+        dog = adjust(rescale(self.images["O"]), pad=12, yshift=-30)
 
-        dragon = rescale(self.images["D"])
-        phoenix = rescale(self.images["P"])
+        dragon = adjust(rescale(self.images["D"]), pad=30, yshift=-16)
+        phoenix = adjust(rescale(self.images["P"]), pad=20, yshift=8)
 
-        gem = self.suits["gem"].resize((96, 96))
-        pagoda = self.suits["pagoda"].resize((96, 96))
+        gem = adjust(self.suits["gem"].resize((90, 90)), pad=20)
+        pagoda = adjust(self.suits["pagoda"].resize((96, 96)), pad=-8)
 
         lines = [["Teach us, in life"],
                  ["to be", mahjong, "and", sword],
@@ -69,14 +72,14 @@ class PuzzleText(object):
                  ["as", dragon, "and", phoenix],
                  ["to have", gem, pagoda]]
         for idx, line in enumerate(lines):
-            self._draw_line(line, 160 + idx * 160)
+            self._draw_line(line, 180 + idx * 160)
         return self.card
 
 
 class PuzzleRound(object):
     def __init__(self, round_num, codes, tricks, scores):
         self.acme_small = ImageFont.truetype("fonts/Acme-Regular.ttf", 40)
-        self.acme_large = ImageFont.truetype("fonts/Acme-Regular.ttf", 80)
+        self.acme_large = ImageFont.truetype("fonts/Acme-Regular.ttf", 60)
         self.uphand = Image.open("images/hand_up.png")
         self.downhand = Image.open("images/hand_down.png")
 
@@ -154,7 +157,7 @@ class PuzzleRound(object):
 
         row_spacing = 45
         inner_w = 500
-        cur_y += 100
+        cur_y += 110
         for idx, r in enumerate(self.tricks):
             r = r.replace("-", u"—")
 
