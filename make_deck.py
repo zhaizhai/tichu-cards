@@ -1,80 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os, sys, math
+import os, sys, math, json
 from PIL import Image, ImageDraw, ImageFont
 from helpers import SuitImages, FontImages, GridMaker
-
-W, H = 822.0, 1122.0 # bridge dims: 747.0, 1122.0
-CUT_W, CUT_H = 750.0, 1050.0
-SAFE_W, SAFE_H = 678.0, 978.0
-
-def draw_rounded_rect(img, bbox, r, color, thickness):
-    draw = ImageDraw.Draw(img)
-
-    def thick_arc(box, corner):
-        x1, y1, x2, y2 = box
-        for x in range(x1, x2+1):
-            for y in range(y1, y2+1):
-                dist2 = (corner[0] - x)**2 + (corner[1] - y)**2
-                if r - thickness - 0.5 < math.sqrt(dist2) < r + 0.5:
-                    draw.point((x, y), color)
-
-    rx1, ry1, rx2, ry2 = (int(_) for _ in bbox)
-    draw.rectangle(((rx1 + r, ry1), (rx2 - r, ry1 + thickness)), fill=color)
-    draw.rectangle(((rx1 + r, ry2 - thickness), (rx2 - r, ry2)), fill=color)
-    draw.rectangle(((rx1, ry1 + r), (rx1 + thickness, ry2 - r)), fill=color)
-    draw.rectangle(((rx2 - thickness, ry1 + r), (rx2, ry2 - r)), fill=color)
-
-    thick_arc((rx1, ry1, rx1+r, ry1+r), (rx1+r, ry1+r))
-    thick_arc((rx2-r, ry1, rx2, ry1+r), (rx2-r, ry1+r))
-    thick_arc((rx1, ry2-r, rx1+r, ry2), (rx1+r, ry2-r))
-    thick_arc((rx2-r, ry2-r, rx2, ry2), (rx2-r, ry2-r))
-
-
-class Card(object):
-    def __init__(self, guides=""):
-        self.img = Image.new("RGBA", (int(W),int(H)), "white")
-
-        draw = ImageDraw.Draw(self.img)
-        if "C" in guides:
-            ul = (W/2 - CUT_W/2, H/2 - CUT_H/2)
-            br = (W/2 + CUT_W/2, H/2 + CUT_H/2)
-            draw_rounded_rect(self.img, ul+br, 50, "blue", 5)
-        if "S" in guides:
-            ul = (W/2 - SAFE_W/2, H/2 - SAFE_H/2)
-            br = (W/2 + SAFE_W/2, H/2 + SAFE_H/2)
-            draw_rounded_rect(self.img, ul+br, 40, "red", 2)
-
-    def draw_back(self):
-        ul = (W/2 - SAFE_W/2, H/2 - SAFE_H/2)
-        br = (W/2 + SAFE_W/2, H/2 + SAFE_H/2)
-        mask = Image.new("RGBA", self.img.size)
-        draw_rounded_rect(mask, ul+br, 40, "black", int(SAFE_W - 1))
-
-        pattern = Image.new("RGBA", self.img.size)
-        draw = ImageDraw.Draw(pattern)
-        draw.rectangle((0,0) + pattern.size, fill="#ddcb8d")
-        for x in range(pattern.size[0]):
-            for y in range(pattern.size[1]):
-                a, b = (x + y), (x - y)
-                if (a % 70) <= 9 or (b % 70) <= 9:
-                    draw.point((x, y), "#9e8634")
-        self.img.paste(pattern, (0, 0), mask)
-
-    def _paste(self, icon, x, y):
-        w, h = icon.size
-        # use icon as mask for itself
-        self.img.paste(icon, (x, y, x + w, y + h), icon)
-
-    def paste(self, icon, x, y):
-        w, h = icon.size
-        self._paste(icon, x - w/2, y - h/2)
-
-    def pasten(self, icon, positions):
-        w, h = icon.size
-        for x, y in positions:
-            self._paste(icon, x - w/2, y - h/2)
-
+from puzzle_cards import PuzzleText, PuzzleRound
+from card import Card, W, H, SAFE_W, SAFE_H
 
 class CardMaker(object):
     def __init__(self):
@@ -208,9 +138,40 @@ def make_deck(guides="C", imgdir=None):
     if imgdir is not None:
         if not os.path.exists(imgdir):
             os.makedirs(imgdir)
-
-    fulldeck = Image.new("RGBA", (13 * int(W), 5 * int(H)))
     cm = CardMaker()
+    fulldeck = Image.new("RGBA", (13 * int(W), 5 * int(H)))
+
+    def paste_or_save(img, filename, (c, r)):
+        if imgdir is not None:
+            img.save(os.path.join(imgdir, filename))
+        else:
+            fulldeck.paste(img, (c * int(W), r * int(H)))
+
+    # back
+    back = Card(guides=guides)
+    back.draw_back()
+    paste_or_save(back.img, "back.png", (0, 0))
+
+    # specials
+    special_names = ["phoenix", "dragon", "dog", "mahjong"]
+    for idx, special in enumerate("PDOM"):
+        card = cm.make_special(special, guides=guides)
+        paste_or_save(card.img, special_names[idx] + ".png", (idx + 1, 0))
+
+    # teachus
+    f = open("puzzle_data.json", "r")
+    puzzle_data = json.loads(f.read())
+    f.close()
+
+    ptext = PuzzleText(guides=guides).make_card().img
+    paste_or_save(ptext, "teachus.png", (5, 0))
+    for idx, round_data in enumerate(puzzle_data):
+        num = idx + 1
+        codes, tricks, scores = round_data
+        card = PuzzleRound(num, codes, tricks, scores, guides=guides).make_card()
+        paste_or_save(card.img, "round" + str(num) + ".png", (num + 5, 0))
+
+    # 52 cards
     for suit in range(4):
         for num in range(1, 14):
             if num <= 10:
@@ -224,21 +185,6 @@ def make_deck(guides="C", imgdir=None):
                 card.img.save(os.path.join(imgdir, suit_name[suit] + num_name + ".png"))
             else:
                 fulldeck.paste(card.img, ((num - 1) * int(W), (suit + 1) * int(H)))
-
-    back = Card(guides=guides)
-    back.draw_back()
-    if imgdir is not None:
-        back.img.save(os.path.join(imgdir, "back.png"))
-    else:
-        fulldeck.paste(back.img, (0, 0))
-
-    special_names = ["phoenix", "dragon", "dog", "mahjong"]
-    for idx, special in enumerate("PDOM"):
-        card = cm.make_special(special, guides=guides)
-        if imgdir is not None:
-            card.img.save(os.path.join(imgdir, special_names[idx] + ".png"))
-        else:
-            fulldeck.paste(card.img, ((idx + 1) * int(W), 0))
 
     fulldeck.save("test.png")
 

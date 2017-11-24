@@ -6,7 +6,7 @@ from card import Card
 
 
 class PuzzleText(object):
-    def __init__(self):
+    def __init__(self, guides="CS"):
         self.acme = ImageFont.truetype("fonts/Acme-Regular.ttf", 60)
 
         self.images = images = {}
@@ -20,7 +20,7 @@ class PuzzleText(object):
         for idx, suit in enumerate(["star", "pagoda", "sword", "gem"]):
             self.suits[suit] = suits_img.crop((idx * 192, 0, (idx+1) * 192, 192))
 
-        self.card = Card(guides="CS")
+        self.card = Card(guides=guides)
 
     def _draw_line(self, line, y):
         draw = ImageDraw.Draw(self.card.img)
@@ -77,7 +77,7 @@ class PuzzleText(object):
 
 
 class PuzzleRound(object):
-    def __init__(self, round_num, codes, tricks, scores):
+    def __init__(self, round_num, codes, tricks, scores, guides="CS"):
         self.acme_small = ImageFont.truetype("fonts/Acme-Regular.ttf", 40)
         self.acme_large = ImageFont.truetype("fonts/Acme-Regular.ttf", 60)
         self.uphand = Image.open("images/hand_up.png")
@@ -89,7 +89,7 @@ class PuzzleRound(object):
         self.tricks = tricks
         self.scores = (x if isinstance(x, str) else str(x) for x in scores)
 
-        self.card = Card(guides="CS")
+        self.card = Card(guides=guides)
         self.W, self.H = self.card.size()
         self.hand_spacing = 60
 
@@ -156,30 +156,33 @@ class PuzzleRound(object):
         self._draw_code(self.codes[1], cur_y)
 
         row_spacing = 45
-        inner_w = 500
+        inner_w = 540
         cur_y += 110
         for idx, r in enumerate(self.tricks):
             r = r.replace("-", u"—")
-
             tokens = r.split(" ")
-            row = "   ".join(tokens)
+            r = "   ".join(tokens)
+            r = r.replace(".", " . ")
+
             draw.text((W/2 - inner_w/2, cur_y + row_spacing * idx),
-                      row, font=self.acme_small, fill="black")
+                      r, font=self.acme_small, fill="black")
 
         self._draw_scores()
         return self.card
 
 
-f = open("puzzle_data.json", "r")
-puzzle_data = json.loads(f.read())
+if __name__ == "__main__":
+    f = open("puzzle_data.json", "r")
+    puzzle_data = json.loads(f.read())
+    f.close()
 
-W, H = Card().img.size
-output = Image.new("RGBA", (6 * W, H))
-output.paste(PuzzleText().make_card().img, (0, 0))
+    W, H = Card().img.size
+    output = Image.new("RGBA", (6 * W, H))
+    output.paste(PuzzleText().make_card().img, (0, 0))
 
-for idx, round_data in enumerate(puzzle_data):
-    num = idx + 1
-    codes, tricks, scores = round_data
-    card = PuzzleRound(num, codes, tricks, scores).make_card()
-    output.paste(card.img, (num * W, 0))
-output.save("test.png")
+    for idx, round_data in enumerate(puzzle_data):
+        num = idx + 1
+        codes, tricks, scores = round_data
+        card = PuzzleRound(num, codes, tricks, scores).make_card()
+        output.paste(card.img, (num * W, 0))
+    output.save("test.png")
