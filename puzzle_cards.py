@@ -54,23 +54,23 @@ class PuzzleText(object):
             w, h = img.size
             return img.crop((-pad, min(-yshift, 0), w + pad, max(h, h - yshift)))
 
-        mahjong = adjust(rescale(self.images["M"]), pad=12)
-        sword = adjust(self.suits["sword"].resize((96, 96)), pad=30, yshift=-16)
+        mahjong = adjust(rescale(self.images["M"]), pad=18)
+        sword = adjust(self.suits["sword"].resize((96, 96)), pad=24, yshift=-16)
 
-        star = adjust(self.suits["star"].resize((96, 96)), pad=24, yshift=-16)
-        dog = adjust(rescale(self.images["O"]), pad=18, yshift=-30)
+        star = adjust(self.suits["star"].resize((96, 96)), pad=20, yshift=-16)
+        dog = adjust(rescale(self.images["O"]), pad=22, yshift=-30)
 
-        dragon = adjust(rescale(self.images["D"]), pad=30, yshift=-16)
-        phoenix = adjust(rescale(self.images["P"]), pad=20, yshift=8)
+        dragon = adjust(rescale(self.images["D"]), pad=18, yshift=-16)
+        phoenix = adjust(rescale(self.images["P"]), pad=16, yshift=8)
 
-        gem = adjust(self.suits["gem"].resize((90, 90)), pad=12)
-        pagoda = adjust(self.suits["pagoda"].resize((96, 96)), pad=-4)
+        gem = adjust(self.suits["gem"].resize((90, 90)), pad=0)
+        pagoda = adjust(self.suits["pagoda"].resize((96, 96)), pad=10)
 
         lines = [["Teach us, in life,"],
-                 ["     to be", mahjong, "and", sword, ","],
-                 ["     to be", star, "and", dog, ","],
-                 ["     as", dragon, "and", phoenix, ","],
-                 ["to have  ", gem, pagoda, "."]]
+                 ["  to be", mahjong, "and", sword, ","],
+                 ["  to be", star, "and", dog, ","],
+                 [" and as", dragon, "and", phoenix, ","],
+                 ["to have   ", gem, pagoda, "."]]
         for idx, line in enumerate(lines):
             self._draw_line(line, 180 + idx * 160)
         return self.card

@@ -134,42 +134,49 @@ class CardMaker(object):
             card.paste(mini.transpose(Image.ROTATE_180), ox, int(H) - oy)
 
 
-def make_deck(guides="C", imgdir=None):
+def make_deck(guides="C", imgdir=None, spacing=0):
     if imgdir is not None:
         if not os.path.exists(imgdir):
             os.makedirs(imgdir)
     cm = CardMaker()
-    fulldeck = Image.new("RGBA", (13 * int(W), 5 * int(H)))
+    fulldeck = Image.new("RGBA", (13 * (int(W) + 2 * spacing),
+                                  5 * (int(H) + 2 * spacing)))
 
-    def paste_or_save(img, filename, (c, r)):
+    def paste_or_save(card, filename, (c, r)):
+        # TODO: make option
+        img = Image.new("RGBA", card.img.size)
+        img.paste(card.img, (0, 0), card.cut_mask())
         if imgdir is not None:
             img.save(os.path.join(imgdir, filename))
         else:
-            fulldeck.paste(img, (c * int(W), r * int(H)))
+            fulldeck.paste(img, (c * (int(W) + 2 * spacing) + spacing,
+                                 r * (int(H) + 2 * spacing) + spacing), img)
 
     # back
     back = Card(guides=guides)
+    # ["#2891c4", "#ddcb8d", "#5a8da6", "#ea3944", "#5f5f5f"]
+    # blue, tan, gray-blue, pink, dark gray
     back.draw_back()
-    paste_or_save(back.img, "back.png", (0, 0))
+    paste_or_save(back, "back.png", (0, 0))
 
     # specials
     special_names = ["phoenix", "dragon", "dog", "mahjong"]
     for idx, special in enumerate("PDOM"):
         card = cm.make_special(special, guides=guides)
-        paste_or_save(card.img, special_names[idx] + ".png", (idx + 1, 0))
+        paste_or_save(card, special_names[idx] + ".png", (idx + 1, 0))
 
     # teachus
     f = open("puzzle_data.json", "r")
     puzzle_data = json.loads(f.read())
     f.close()
 
-    ptext = PuzzleText(guides=guides).make_card().img
+    ptext = PuzzleText(guides=guides).make_card()
     paste_or_save(ptext, "teachus.png", (5, 0))
     for idx, round_data in enumerate(puzzle_data):
         num = idx + 1
         codes, tricks, scores = round_data
         card = PuzzleRound(num, codes, tricks, scores, guides=guides).make_card()
-        paste_or_save(card.img, "round" + str(num) + ".png", (num + 5, 0))
+        paste_or_save(card, "round" + str(num) + ".png", (num + 5, 0))
 
     # 52 cards
     for suit in range(4):
@@ -181,16 +188,10 @@ def make_deck(guides="C", imgdir=None):
 
             suit_name = ["star", "pagoda", "sword", "gem"]
             num_name = "A" if num == 1 else str(num)
-            if imgdir is not None:
-                card.img.save(os.path.join(imgdir, suit_name[suit] + num_name + ".png"))
-            else:
-                fulldeck.paste(card.img, ((num - 1) * int(W), (suit + 1) * int(H)))
+            paste_or_save(card, suit_name[suit] + num_name + ".png",
+                          (num - 1, suit + 1))
 
     fulldeck.save("test.png")
 
-make_deck()
+make_deck(guides="", spacing=-36)
 #make_deck(guides="", imgdir="cards")
-
-#CardMaker().make_card(1, 0, guides="CS").img.save("images/test.png")
-#CardMaker().make_facecard(11, 1, guides="CS").img.save("images/test.png")
-#CardMaker().make_special("M", guides="C").img.save("images/test.png")

@@ -36,16 +36,23 @@ class Card(object):
         if "C" in guides:
             ul = (W/2 - CUT_W/2, H/2 - CUT_H/2)
             br = (W/2 + CUT_W/2, H/2 + CUT_H/2)
-            draw_rounded_rect(self.img, ul+br, 50, "blue", 5)
+            draw_rounded_rect(self.img, ul+br, 50, "black", 10)
         if "S" in guides:
             ul = (W/2 - SAFE_W/2, H/2 - SAFE_H/2)
             br = (W/2 + SAFE_W/2, H/2 + SAFE_H/2)
             draw_rounded_rect(self.img, ul+br, 40, "red", 2)
 
+    def cut_mask(self):
+        ul = (W/2 - CUT_W/2, H/2 - CUT_H/2)
+        br = (W/2 + CUT_W/2, H/2 + CUT_H/2)
+        mask = Image.new("RGBA", self.img.size)
+        draw_rounded_rect(mask, ul+br, 50, "black", int(CUT_W - 1))
+        return mask
+
     def size(self):
         return self.img.size
 
-    def draw_back(self):
+    def draw_back(self, color="#ea3944"): # red
         ul = (W/2 - SAFE_W/2, H/2 - SAFE_H/2)
         br = (W/2 + SAFE_W/2, H/2 + SAFE_H/2)
         mask = Image.new("RGBA", self.img.size)
@@ -53,13 +60,23 @@ class Card(object):
 
         pattern = Image.new("RGBA", self.img.size)
         draw = ImageDraw.Draw(pattern)
-        draw.rectangle((0,0) + pattern.size, fill="#ddcb8d")
-        for x in range(pattern.size[0]):
-            for y in range(pattern.size[1]):
-                a, b = (x + y), (x - y)
-                if (a % 70) <= 9 or (b % 70) <= 9:
-                    draw.point((x, y), "#9e8634")
+        draw.rectangle((0,0) + pattern.size, fill=color)
+
+        suits = Image.open("images/suits.png")
+        suits = suits.resize((256, 64), Image.ANTIALIAS)
+
+        # # hatched pattern
+        # draw.rectangle((0,0) + pattern.size, fill="#ddcb8d")
+        # for x in range(pattern.size[0]):
+        #     for y in range(pattern.size[1]):
+        #         a, b = (x + y), (x - y)
+        #         if (a % 70) <= 9 or (b % 70) <= 9:
+        #             draw.point((x, y), "#9e8634")
+
         self.img.paste(pattern, (0, 0), mask)
+        self.paste(suits, int(W/2), int(H/4))
+        self.paste(suits.transpose(Image.ROTATE_180), int(W/2), int(3*H/4))
+
 
     def _paste(self, icon, x, y):
         w, h = icon.size
